@@ -1,0 +1,10 @@
+*.pyc
+*.swp
+*.egg-info
+.history
+.DS_Store
+.tox
+build
+dist
+MANIFEST
+MANIFEST.in
