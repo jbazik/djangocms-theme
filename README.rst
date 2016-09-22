@@ -27,8 +27,11 @@ Requirements
 ------------
 
 Requires:
+
 * Django 1.7+
+
 * Django-CMS 3.0+
+
 * Pillow
 
 Installation and Configuration
@@ -98,10 +101,10 @@ THEME_TEMPLATE_TYPES
   structure, including ids and classes, that are referenced by a theme.
   Defaults to a single "default" type.  Example::
 
-  THEME_TEMPLATE_TYPES = (
-      ('page', _('Page')),
-      ('blog', _('Blog')),
-  )
+    THEME_TEMPLATE_TYPES = (
+        ('page', _('Page')),
+        ('blog', _('Blog')),
+    )
 
 THEME_TEMPLATE_MAPPING
   A dictionary that associates template types to CMS templates.  Themes
@@ -109,7 +112,7 @@ THEME_TEMPLATE_MAPPING
   overlap.  If there is only one THEME_TEMPLATE_TYPE, then defaults to
   a mapping of that theme to all templates in CMS_TEMPLATES. Example::
 
-  THEME_TEMPLATE_MAPPING = {
-      'page': ('simple_page.html', 'complex_page.html'),
-      'blog': ('blog.html',),
-  }
+    THEME_TEMPLATE_MAPPING = {
+        'page': ('simple_page.html', 'complex_page.html'),
+        'blog': ('blog.html',),
+    }
