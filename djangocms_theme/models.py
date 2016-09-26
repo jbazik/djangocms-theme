@@ -53,6 +53,14 @@ class CanUseQuerySet(models.QuerySet):
                            Q(owner=user) |
                            Q(share=SHARE_GROUP) &
                                Q(group__in=user.groups.all()))
+    def can_edit(self, user):
+        if user.is_superuser:
+            return self.all()
+        if not user.is_staff:
+            return self.none()
+        return self.filter(Q(owner=user) |
+                           Q(share=SHARE_GROUP) &
+                               Q(group__in=user.groups.all()))
 
 class RelatedManager(models.Manager):
     use_for_related_fields = True
@@ -229,7 +237,7 @@ class Image(PermissionBase):
 
 @python_2_unicode_compatible
 class Font(PermissionBase):
-    STRETCH = [(None, 'none')] + [(v,v) for v in (
+    STRETCH = [(None, _('None'))] + [(v,_(v.capitalize())) for v in (
         'normal',
         'condensed',
         'ultra-condensed',
@@ -241,20 +249,20 @@ class Font(PermissionBase):
         'ultra-expanded',
     )]
     WEIGHT_CHOICES = (
-        ( None,    'none'),
-        ('normal', 'normal'),
-        ('bold',   'bold'),
-        ('100',    '100 Thin (Hairline)'),
-        ('200',    '200 Extra Light (Ultra Light)'),
-        ('300',    '300 Light'),
-        ('400',    '400 Normal'),
-        ('500',    '500 Medium'),
-        ('600',    '600 Semi Bold (Demi Bold)'),
-        ('700',    '700 Bold'),
-        ('800',    '800 Extra Bold (Ultra Bold)'),
-        ('900',    '900 Black (Heavy) '),
+        ( None,    _('None')),
+        ('normal', _('Normal')),
+        ('bold',   _('Bold')),
+        ('100',    _('100 Thin (Hairline)')),
+        ('200',    _('200 Extra Light (Ultra Light)')),
+        ('300',    _('300 Light')),
+        ('400',    _('400 Normal')),
+        ('500',    _('500 Medium')),
+        ('600',    _('600 Semi Bold (Demi Bold)')),
+        ('700',    _('700 Bold')),
+        ('800',    _('800 Extra Bold (Ultra Bold)')),
+        ('900',    _('900 Black (Heavy)')),
     )
-    STYLE = [(None, 'none')] + [(v,v) for v in (
+    STYLE = [(None, _('None'))] + [(v,_(v.capitalize())) for v in (
         'normal',
         'italic',
         'oblique',

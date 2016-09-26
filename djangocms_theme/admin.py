@@ -31,29 +31,27 @@ class PermissionMixin(object):
 
     def get_queryset(self, request):
         qs = super(PermissionMixin, self).get_queryset(request)
-        return qs.can_use(request.user)
+        return qs.can_edit(request.user)
 
 class ImageInline(admin.TabularInline):
     model = Theme.images.through
     verbose_name_plural = "Images used by this theme"
     extra = 0
-    #fields = ('image',)
 
 class FontInline(admin.TabularInline):
     model = Theme.fonts.through
     verbose_name_plural = "Fonts used by this theme"
     extra = 0
-    #fields = ('family', 'variant', 'stretch', 'weight', 'style')
 
 class StylesheetInline(admin.TabularInline):
     model = Stylesheet
     extra = 0
-    #fields = ('media',)
+    fields = ('media',)
 
 class FontSrcInline(admin.TabularInline):
     model = FontSrc
     extra = 0
-    #fields = ('local', 'file', 'format')
+    fields = ('format', 'local', 'file')
 
 @admin.register(Image)
 class ImageAdmin(PermissionMixin, admin.ModelAdmin):
@@ -66,6 +64,9 @@ class ImageAdmin(PermissionMixin, admin.ModelAdmin):
             'fields': ('share', 'owner', 'group'),
         }),
     )
+    list_display = ('name', 'origin', 'owner', 'group')
+    list_filter = ('origin',)
+    search_fields = ('name', 'origin', 'description')
 
 @admin.register(Font)
 class FontAdmin(PermissionMixin, admin.ModelAdmin):
@@ -79,6 +80,10 @@ class FontAdmin(PermissionMixin, admin.ModelAdmin):
             'fields': ('share', 'owner', 'group'),
         }),
     )
+    list_display = ('name', 'origin', 'family', 'weight', 'style',
+                    'owner', 'group')
+    list_filter = ('origin', 'weight', 'style')
+    search_fields = ('name', 'origin', 'family')
     inlines = [FontSrcInline]
 
 @admin.register(Theme)
@@ -86,20 +91,24 @@ class ThemeAdmin(PermissionMixin, admin.ModelAdmin):
     form = ThemeForm
     fieldsets = (
         (None, {
-            'fields': (('name', 'origin'), ('description', 'screenshot')),
+            'fields': (('name', 'origin'),
+                       ('description', 'screenshot'),
+                       ('parent', 'reset')),
         }),
         ('Permissions', {
             'classes': ('collapse',),
             'fields': ('share', 'owner', 'group'),
         }),
     )
-    exclude = ('images', 'fonts')
     formfield_overrides = {
         models.TextField: {'widget': TextWidget()},
     }
-    list_display = ('name', 'origin', 'screenshot', 'owner', 'group')
-    filter_horizontal = ('images', 'fonts')
+    list_display = ('name', 'origin', 'owner', 'group')
+    list_filter = ('origin',)
+    #filter_horizontal = ('images', 'fonts')
+    search_fields = ('name', 'origin', 'description')
     inlines = [StylesheetInline, ImageInline, FontInline]
+    #inlines = [StylesheetInline]
 
 @admin.register(PageTheme)
 class PageThemeAdmin(PageExtensionAdmin):
