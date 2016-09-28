@@ -51,7 +51,7 @@ class FontInline(admin.TabularInline):
 class StylesheetInline(admin.TabularInline):
     model = Stylesheet
     extra = 0
-    fields = ('media',)
+    fields = ('css', 'media',)
 
 class FontSrcInline(admin.TabularInline):
     model = FontSrc
