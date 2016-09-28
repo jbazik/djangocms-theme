@@ -33,6 +33,11 @@ class PermissionMixin(object):
         qs = super(PermissionMixin, self).get_queryset(request)
         return qs.can_edit(request.user)
 
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.owner = request.user
+        obj.save()
+
 class ImageInline(admin.TabularInline):
     model = Theme.images.through
     verbose_name_plural = "Images used by this theme"
@@ -65,7 +70,9 @@ class ImageAdmin(PermissionMixin, admin.ModelAdmin):
         }),
     )
     list_display = ('name', 'origin', 'owner', 'group')
-    list_filter = ('origin',)
+    list_filter = ('origin',
+                   ('owner', admin.RelatedOnlyFieldListFilter),
+                   ('group', admin.RelatedOnlyFieldListFilter))
     search_fields = ('name', 'origin', 'description')
 
 @admin.register(Font)
@@ -82,7 +89,9 @@ class FontAdmin(PermissionMixin, admin.ModelAdmin):
     )
     list_display = ('name', 'origin', 'family', 'weight', 'style',
                     'owner', 'group')
-    list_filter = ('origin', 'weight', 'style')
+    list_filter = ('origin', 'weight', 'style',
+                   ('owner', admin.RelatedOnlyFieldListFilter),
+                   ('group', admin.RelatedOnlyFieldListFilter))
     search_fields = ('name', 'origin', 'family')
     inlines = [FontSrcInline]
 
@@ -93,7 +102,8 @@ class ThemeAdmin(PermissionMixin, admin.ModelAdmin):
         (None, {
             'fields': (('name', 'origin'),
                        ('description', 'screenshot'),
-                       ('parent', 'reset')),
+                       ('parent', 'reset'),
+                       'images', 'fonts'),
         }),
         ('Permissions', {
             'classes': ('collapse',),
@@ -104,11 +114,21 @@ class ThemeAdmin(PermissionMixin, admin.ModelAdmin):
         models.TextField: {'widget': TextWidget()},
     }
     list_display = ('name', 'origin', 'owner', 'group')
-    list_filter = ('origin',)
-    #filter_horizontal = ('images', 'fonts')
+    list_filter = ('origin',
+                   ('owner', admin.RelatedOnlyFieldListFilter),
+                   ('group', admin.RelatedOnlyFieldListFilter))
+    filter_horizontal = ('images', 'fonts')
     search_fields = ('name', 'origin', 'description')
-    inlines = [StylesheetInline, ImageInline, FontInline]
-    #inlines = [StylesheetInline]
+    inlines = [StylesheetInline]
+
+    def get_form(self, request, obj=None, **kwargs):
+        """
+        The parent relationship isn't where you want to add or modify themes.
+        """
+        form = super(ThemeAdmin, self).get_form(request, obj, **kwargs)
+        form.base_fields['parent'].widget.can_add_related = False
+        form.base_fields['parent'].widget.can_change_related = False
+        return form
 
 @admin.register(PageTheme)
 class PageThemeAdmin(PageExtensionAdmin):
