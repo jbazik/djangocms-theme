@@ -1,0 +1,8 @@
+/*
+  This is a workaround for a rule in djangocms-admin-style that hides
+  related widget links.  See:
+      https://github.com/divio/djangocms-admin-style/issues/372
+*/
+a#add_id_images {
+    display: inline-block;
+}

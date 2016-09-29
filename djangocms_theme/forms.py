@@ -37,6 +37,12 @@ class ThemeForm(forms.ModelForm):
                     file.seek(0)
         return ss
 
+    class Media:
+        # See https://github.com/divio/djangocms-admin-style/issues/372
+        css = {
+            'all': ('djangocms_theme/css/fix-related-image.css',)
+        }
+
 class GridModelChoiceField(forms.ModelChoiceField):
     """
     Subclass theme ForeignKey formfield to override the label so
