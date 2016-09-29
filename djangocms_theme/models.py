@@ -304,7 +304,7 @@ class Font(PermissionBase):
         return self.name;
 
     def sample(self):
-        return u'<span style="font-family:\'%s\'">ABCabc</span>' & self.family
+        return u'<span style="font-family:\'%s\'">ABCabc</span>' % self.family
 
     def __init__(self, *args, **kwargs):
         super(Font, self).__init__(*args, **kwargs)

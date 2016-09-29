@@ -6,7 +6,6 @@ from cms.extensions import PageExtensionAdmin
 
 from djangocms_theme.widgets import TextWidget
 from djangocms_theme.forms import (ThemeForm, PageThemeForm,
-                                   FontModelMultipleChoiceField,
                                    GridModelChoiceField, GridRadioRenderer)
 from djangocms_theme.models import (Theme, Image, Font, FontSrc,
                                     Stylesheet, PageTheme)
@@ -132,11 +131,13 @@ class ThemeAdmin(PermissionMixin, admin.ModelAdmin):
         return form
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
+        """
+        Only show choices that a user can use.
+        """
         if db_field.name == 'images':
             kwargs['queryset'] = Image.objects.can_use(request.user)
         elif db_field.name == 'fonts':
             kwargs['queryset'] = Font.objects.can_use(request.user)
-            kwargs['form_class'] = FontModelMultipleChoiceField
         return super(ThemeAdmin, self).formfield_for_manytomany(
                                        db_field, request, **kwargs)
 
@@ -155,6 +156,11 @@ class PageThemeAdmin(PageExtensionAdmin):
         a grid of screenshots.  Doing this here, rather than directly
         in the form, prevents interfering with the related model wrapper
         the admin adds (which appends the "change" and "add" links).
+
+        Only show themes that request.user can use.  It might make
+        more sense to show themes that request.current_page can use,
+        but the logic there is dense and changes to page permissions
+        would require listening to cms signals, etc.
         """
         if db_field.name == 'theme':
             kwargs['queryset'] = Theme.objects.can_use(request.user)
