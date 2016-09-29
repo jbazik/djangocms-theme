@@ -16,10 +16,10 @@ class PermTests(TestCase):
         self.rf = RequestFactory()
         self.user1 = User.objects.create_user('nbarnes',
                                               'nbarnes@hudsucker.com',
-                                              'password')
+                                              'password', is_staff=True)
         self.user2 = User.objects.create_user('aarcher',
                                               'aarcher@hudsucker.com',
-                                              'password')
+                                              'password', is_staff=True)
         self.root = create_page('root', 'bogus.html', 'en', published=True)
         assign_user_to_page(self.root, self.user1, grant_on=ACCESS_PAGE)
 

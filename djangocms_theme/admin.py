@@ -6,6 +6,7 @@ from cms.extensions import PageExtensionAdmin
 
 from djangocms_theme.widgets import TextWidget
 from djangocms_theme.forms import (ThemeForm, PageThemeForm,
+                                   FontModelMultipleChoiceField,
                                    GridModelChoiceField, GridRadioRenderer)
 from djangocms_theme.models import (Theme, Image, Font, FontSrc,
                                     Stylesheet, PageTheme)
@@ -130,11 +131,25 @@ class ThemeAdmin(PermissionMixin, admin.ModelAdmin):
         form.base_fields['parent'].widget.can_change_related = False
         return form
 
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == 'images':
+            kwargs['queryset'] = Image.objects.can_use(request.user)
+        elif db_field.name == 'fonts':
+            kwargs['queryset'] = Font.objects.can_use(request.user)
+            kwargs['form_class'] = FontModelMultipleChoiceField
+        return super(ThemeAdmin, self).formfield_for_manytomany(
+                                       db_field, request, **kwargs)
+
+    class Media:
+        css = {
+            "all": (Font.all_rules_url,),
+        }
+
 @admin.register(PageTheme)
 class PageThemeAdmin(PageExtensionAdmin):
     form = PageThemeForm
 
-    def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """
         Replace the form field for theme selection to one that renders
         a grid of screenshots.  Doing this here, rather than directly
@@ -142,10 +157,9 @@ class PageThemeAdmin(PageExtensionAdmin):
         the admin adds (which appends the "change" and "add" links).
         """
         if db_field.name == 'theme':
-            kwargs['queryset'] = Theme.objects.all()
+            kwargs['queryset'] = Theme.objects.can_use(request.user)
             kwargs['widget'] = RadioSelect(renderer=GridRadioRenderer)
             kwargs['empty_label'] = 'No Theme'
-            return GridModelChoiceField(**kwargs)
-        else:
-            return super(PageThemeAdmin, self).formfield_for_foreignkey(
+            kwargs['form_class'] = GridModelChoiceField
+        return super(PageThemeAdmin, self).formfield_for_foreignkey(
                                                db_field, request, **kwargs)

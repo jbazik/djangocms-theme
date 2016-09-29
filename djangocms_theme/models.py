@@ -282,8 +282,29 @@ class Font(PermissionBase):
     variant = models.CharField(_('variant'), max_length=100, blank=True,
                      help_text=_('Typical values: normal, small-caps'))
 
+    all_rules_path = THEME_PATH + '/fonts.css'
+    all_rules_url = settings.MEDIA_URL + all_rules_path
+
+    @classmethod
+    def all_rules(cls):
+        """
+        Iterator returns font-face rules for all fonts.
+        """
+        for font in cls.objects.all():
+            yield font.rule()
+
+    @classmethod
+    def update_all_rules_stylesheet(cls):
+        if default_storage.exists(cls.all_rules_path):
+            default_storage.delete(cls.all_rules_path)
+        default_storage.save(cls.all_rules_path, ContentFile(
+                             "\n".join(cls.all_rules())))
+
     def __str__(self):
         return self.name;
+
+    def sample(self):
+        return u'<span style="font-family:\'%s\'">ABCabc</span>' & self.family
 
     def __init__(self, *args, **kwargs):
         super(Font, self).__init__(*args, **kwargs)
@@ -295,6 +316,11 @@ class Font(PermissionBase):
             for src in self.srcs:
                 src.rename(self.name)
         self.update_themes()
+        self.__class__.update_all_rules_stylesheet()
+
+    def delete(self, *args, **kwargs):
+        super(Font, self).delete(*args, **kwargs)
+        self.__class__.update_all_rules_stylesheet()
 
     def rule(self):
         """
@@ -404,6 +430,13 @@ class FontSrc(models.Model):
     def save(self, *args, **kwargs):
         super(FontSrc, self).save(*args, **kwargs)
         self.font.update_themes()
+        Font.update_all_rules_stylesheet()
+
+    def delete(self, *args, **kwargs):
+        font = self.font
+        super(FontSrc, self).delete(*args, **kwargs)
+        font.update_themes()
+        Font.update_all_rules_stylesheet()
 
 @python_2_unicode_compatible
 class Stylesheet(models.Model):

@@ -37,6 +37,14 @@ class ThemeForm(forms.ModelForm):
                     file.seek(0)
         return ss
 
+class FontModelMultipleChoiceField(forms.ModelMultipleChoiceField):
+    """
+    Subclass fonts ManyToMany formfield to override the label so
+    that it displays a sample of the font.
+    """
+    def label_from_instance(self, obj):
+        return mark_safe(u'%s: %s' % (obj.name, obj.sample()))
+
 class GridModelChoiceField(forms.ModelChoiceField):
     """
     Subclass theme ForeignKey formfield to override the label so

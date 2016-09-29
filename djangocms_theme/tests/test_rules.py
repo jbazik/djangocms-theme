@@ -1,4 +1,4 @@
-import re
+import os, re
 
 from django.test import TestCase
 
@@ -68,6 +68,21 @@ class RuleTests(TestCase):
             "}",
         ]) % (self.mr.url('font', 'foo.woff'),
               self.mr.url('font', 'foo.ttf')))
+
+    def test_font_all_rules(self):
+        font1 = Font.objects.create(name='font1', family='FooFont1',
+                                          weight='bold')
+        self.addfontsrc(font1, 'test1.ttf', 'ttf')
+        font2 = Font.objects.create(name='font2', family='FooFont2',
+                                          style='italic')
+        self.addfontsrc(font2, 'test2.ttf', 'ttf')
+        css = "\n".join(Font.all_rules())
+        self.assertRegexpMatches(css, r'FooFont1')
+        self.assertRegexpMatches(css, r'FooFont2')
+        all_rules_path = os.path.join(self.mr.abs('fonts.css'))
+        self.assertTrue(os.path.exists(all_rules_path))
+        text = open(all_rules_path, 'r').read()
+        self.assertEqual(css, text)
 
     def test_stylesheet_rules(self):
         css = 'body { background: #fff; }'
