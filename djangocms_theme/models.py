@@ -179,10 +179,11 @@ class Theme(PermissionBase):
         return links
 
     def save(self, *args, **kwargs):
-        if self.screenshot and self._name_orig != self.name:
+        oldname = self._name_orig if self._name_orig != self.name else None
+        if self.screenshot and oldname:
             rename_fieldfile(self.screenshot, self.path_from_name())
         super(Theme, self).save(*args, **kwargs)
-        self.update_css_files(self._name_orig)
+        self.update_css_files(oldname)
         self._name_orig = self.name
 
     def update_css_files(self, oldname=None):
