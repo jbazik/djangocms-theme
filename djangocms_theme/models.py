@@ -147,6 +147,8 @@ class Theme(PermissionBase):
                                 help_text=_('Include CSS Reset.'))
     images = models.ManyToManyField('Image', related_name='themes', blank=True)
     fonts = models.ManyToManyField('Font', related_name='themes', blank=True)
+    fontfams = models.ManyToManyField('FontFamily', related_name='themes',
+                                                    blank=True)
     template_type = models.CharField(_('template type'), max_length=100,
              choices=TEMPLATE_TYPES, blank=True, help_text=_(
                  'CMS template type to which this theme can be applied.'))
@@ -237,6 +239,27 @@ class Image(PermissionBase):
             theme.update_css_files()
 
 @python_2_unicode_compatible
+class FontFamily(PermissionBase):
+    LICENSE_TERMS = (
+        ('pd', _('Public Domain')),
+        ('sil', _('SIL OFL')),
+        ('oss', _('Other Open Source')),
+        ('pu', _('Free for Personal Use')),
+        ('com', _('Commercial')),
+        ('unk', _('Unknown')),
+    )
+    family = models.CharField(_('family'), max_length=100, unique=True,
+                    help_text=_('CSS Font family name for this font.'))
+    origin = models.CharField(_('origin'), max_length=120, blank=True,
+                    help_text=_('Font foundry, designer or website.'))
+    license = models.CharField(_('license'), max_length=10,
+                    choices=LICENSE_TERMS,
+                    help_text=_('License terms.'))
+
+    def __str__(self):
+        return self.family;
+
+@python_2_unicode_compatible
 class Font(PermissionBase):
     STRETCH = [(None, _('None'))] + [(v,_(v.capitalize())) for v in (
         'normal',
@@ -274,6 +297,8 @@ class Font(PermissionBase):
                     help_text=_('Font foundry, designer or website.'))
     family = models.CharField(_('family'), max_length=100,
                     help_text=_('CSS Font family name for this font.'))
+    famptr = models.ForeignKey(FontFamily, on_delete=CASCADE, null=True,
+                                           related_name='fonts')
     weight = models.CharField(_('weight'), max_length=10, blank=True,
                                            choices=WEIGHT_CHOICES)
     style = models.CharField(_('style'), max_length=10, blank=True,
@@ -393,7 +418,7 @@ class FontSrc(models.Model):
                                         editable=False)
 
     def __str__(self):
-        self.name
+        return self.name
 
     @property
     def name(self):
