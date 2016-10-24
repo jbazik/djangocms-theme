@@ -1,6 +1,7 @@
 from django.test import TestCase
 
-from djangocms_theme.models import Theme, Image, Font, FontSrc, Stylesheet
+from djangocms_theme.models import (Theme, Image,
+                                   FontFamily, Font, FontSrc, Stylesheet)
 from djangocms_theme.tests.util import MediaRoot
 
 class PathTests(TestCase):
@@ -23,11 +24,13 @@ class PathTests(TestCase):
 
     def test_fontsrc_path(self):
         self.mr.create_file('font', 'test.ttf')
-        font = Font.objects.create(name='foo', family='FooFont')
+        fam = FontFamily.objects.create(family='FooFont')
+        font = Font.objects.create(famptr=fam)
         obj = FontSrc.objects.create(font=font, format='ttf',
                                      file=self.mr.rel('font', 'test.ttf'))
         obj.fontsrc_file_path('test.ttf')
-        self.assertEqual(obj.path_from_name(), self.mr.rel('font', 'foo.ttf'))
+        self.assertEqual(obj.path_from_name(),
+                         self.mr.rel('font', 'foofont.ttf'))
 
     def test_stylesheet_path(self):
         theme = Theme.objects.create(name='test_theme')

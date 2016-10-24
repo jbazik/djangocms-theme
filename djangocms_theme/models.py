@@ -32,16 +32,6 @@ SHARE_GROUP = 'group'
 SHARE_ANY = 'any'
 SHARE_DEFAULT = SHARE_DEFAULT or SHARE_ANY
 
-def rename_fieldfile(field, newpath):
-    """
-    Change the storage path of a file.
-    """
-    oldpath = field.file.name
-    if field.storage.exists(oldpath):
-        field.storage.save(newpath, field)
-        field.storage.delete(oldpath)
-        field = newpath
-
 
 class CanUseQuerySet(models.QuerySet):
     def can_use(self, user):
@@ -66,6 +56,19 @@ class RelatedManager(models.Manager):
     use_for_related_fields = True
 
 CanUseManager = RelatedManager.from_queryset(CanUseQuerySet)
+
+class RenameBase(object):
+    def rename_fieldfile(self, field, newpath):
+        """
+        Change the storage path of a file field.
+        """
+        field = getattr(self, field, None)
+        if field:
+            oldpath = field.file.name
+            if oldpath != newpath and field.storage.exists(oldpath):
+                field.storage.save(newpath, field)
+                field.storage.delete(oldpath)
+                field.name = newpath
 
 class PermissionBase(models.Model):
     PERMS = (
@@ -135,20 +138,19 @@ def screenshot_path(self, filename):
     return '%s/%s.png' % (SCREENSHOTS_PATH, self.name)
 
 @python_2_unicode_compatible
-class Theme(PermissionBase):
+class Theme(PermissionBase, RenameBase):
 
     name = models.CharField(_('name'), max_length=120, unique=True)
     origin = models.CharField(_('origin'), max_length=120, blank=True,
                               help_text=_('Display name of theme provider.'))
     description = models.TextField(_('description'), blank=True)
-    screenshot = models.ImageField(_('screenshot'), blank=True, null=True,
+    screenshot = models.ImageField(_('screen shot'), blank=True, null=True,
                                    upload_to=screenshot_path)
     reset = models.BooleanField(_('reset'), default=True,
                                 help_text=_('Include CSS Reset.'))
     images = models.ManyToManyField('Image', related_name='themes', blank=True)
-    fonts = models.ManyToManyField('Font', related_name='themes', blank=True)
     fontfams = models.ManyToManyField('FontFamily', related_name='themes',
-                                                    blank=True)
+                                verbose_name=_('font families'), blank=True)
     template_type = models.CharField(_('template type'), max_length=100,
              choices=TEMPLATE_TYPES, blank=True, help_text=_(
                  'CMS template type to which this theme can be applied.'))
@@ -176,14 +178,17 @@ class Theme(PermissionBase):
                 links = []
         elif self.reset:
             links = [(CSS_RESET_URL, 'all')]
-        links += [(s.url, s.media) for s in
-                                   self.stylesheets.all().order_by('media')]
+        links += [(s.url, s.media) for s in self.stylesheets.all()]
         return links
+
+    def rename(self):
+        if self.screenshot:
+            self.rename_fieldfile('screenshot', self.path_from_name())
 
     def save(self, *args, **kwargs):
         oldname = self._name_orig if self._name_orig != self.name else None
-        if self.screenshot and oldname:
-            rename_fieldfile(self.screenshot, self.path_from_name())
+        if oldname:
+            self.rename()
         super(Theme, self).save(*args, **kwargs)
         self.update_css_files(oldname)
         self._name_orig = self.name
@@ -192,12 +197,15 @@ class Theme(PermissionBase):
         for stylesheet in self.stylesheets.all():
             stylesheet.save_css_file(oldname=oldname)
 
+    class Meta:
+        ordering = ['name']
+
 def image_path(self, filename):
     self.imext = os.path.splitext(filename)[1].lower()
     return '%s/%s%s' % (IMAGE_PATH, self.name, self.imext)
 
 @python_2_unicode_compatible
-class Image(PermissionBase):
+class Image(PermissionBase, RenameBase):
 
     image_path = image_path
 
@@ -228,15 +236,21 @@ class Image(PermissionBase):
     def path_from_name(self, name=None):
         return '%s/%s%s' % (IMAGE_PATH, name or self.name, self.imext)
 
+    def rename(self):
+        self.rename_fieldfile('image', self.path_from_name())
+
     def save(self, *args, **kwargs):
         if self._name_orig and self._name_orig != self.name:
-            rename_fieldfile(self.image, self.path_from_name())
+            self.rename()
         super(Image, self).save(*args, **kwargs)
         self.update_themes()
 
     def update_themes(self):
         for theme in self.themes.all():
             theme.update_css_files()
+
+    class Meta:
+        ordering = ['name']
 
 @python_2_unicode_compatible
 class FontFamily(PermissionBase):
@@ -259,8 +273,31 @@ class FontFamily(PermissionBase):
     def __str__(self):
         return self.family;
 
+    def __init__(self, *args, **kwargs):
+        super(FontFamily, self).__init__(*args, **kwargs)
+        self._family_orig = self.family
+
+    def rename(self):
+        for font in self.fonts.all():
+            font.rename()
+
+    def save(self, *args, **kwargs):
+        super(FontFamily, self).save(*args, **kwargs)
+        if self._family_orig and self._family_orig != self.family:
+            self.rename()
+        self.update_themes()
+        Font.update_all_rules_stylesheet()
+
+    def update_themes(self):
+        for theme in self.themes.all():
+            theme.update_css_files()
+
+    class Meta:
+        ordering = ['family']
+        verbose_name_plural = "font families"
+
 @python_2_unicode_compatible
-class Font(PermissionBase):
+class Font(models.Model):
     STRETCH = [(None, _('None'))] + [(v,_(v.capitalize())) for v in (
         'normal',
         'condensed',
@@ -272,6 +309,16 @@ class Font(PermissionBase):
         'extra-expanded',
         'ultra-expanded',
     )]
+    STRETCH_NAMES = {
+        'condensed': _('Narrow'),
+        'ultra-condensed': _('Ultra Narrow'),
+        'extra-condensed': _('Extra Narrow'),
+        'semi-condensed': _('Semi Narrow'),
+        'expanded': _('Wide'),
+        'semi-expanded': _('Semi Wide'),
+        'extra-expanded': _('Extra Wide'),
+        'ultra-expanded': _('Ultra Wide'),
+    }
     WEIGHT_CHOICES = (
         ( None,    _('None')),
         ('normal', _('Normal')),
@@ -286,19 +333,30 @@ class Font(PermissionBase):
         ('800',    _('800 Extra Bold (Ultra Bold)')),
         ('900',    _('900 Black (Heavy)')),
     )
+    WEIGHT_NAMES = {
+        'normal': None,
+        'bold': _('Bold'),
+        '100':  _('Thin'),
+        '200':  _('Extra Light'),
+        '300':  _('Light'),
+        '400':  _('Normal'),
+        '500':  _('Medium'),
+        '600':  _('Semi Bold'),
+        '700':  _('Bold'),
+        '800':  _('Extra Bold'),
+        '900':  _('Black'),
+    }
     STYLE = [(None, _('None'))] + [(v,_(v.capitalize())) for v in (
         'normal',
         'italic',
         'oblique',
     )]
-    name = models.CharField(_('name'), max_length=100, unique=True,
-                  help_text=_('Unique name for this font face definition.'))
-    origin = models.CharField(_('origin'), max_length=120, blank=True,
-                    help_text=_('Font foundry, designer or website.'))
-    family = models.CharField(_('family'), max_length=100,
-                    help_text=_('CSS Font family name for this font.'))
+    STYLE_NAMES = {
+        'italic': 'Italic',
+        'oblique': 'Oblique',
+    }
     famptr = models.ForeignKey(FontFamily, on_delete=CASCADE, null=True,
-                                           related_name='fonts')
+                    verbose_name=_('font family'), related_name='fonts')
     weight = models.CharField(_('weight'), max_length=10, blank=True,
                                            choices=WEIGHT_CHOICES)
     style = models.CharField(_('style'), max_length=10, blank=True,
@@ -327,22 +385,49 @@ class Font(PermissionBase):
                              "\n".join(cls.all_rules())))
 
     def __str__(self):
-        return self.name;
+        name = [self.famptr.family]
+        if self.props:
+            name.append(self.props)
+        return ' '.join(name)
+
+    @property
+    def props(self):
+        """
+        This property is a unique hash for the data in this model, minus
+        the family pointer.
+        """
+        props = []
+        if self.variant:
+            props.append(self.variant.capitalize())
+        if self.stretch and self.STRETCH_NAMES[self.stretch]:
+            props.append(self.STRETCH_NAMES[self.stretch])
+        if self.weight and self.WEIGHT_NAMES[self.weight]:
+            props.append(self.WEIGHT_NAMES[self.weight])
+        if self.style and self.STYLE_NAMES[self.style]:
+            props.append(self.STYLE_NAMES[self.style])
+        return ' '.join(props)
+
+    @property
+    def filename(self):
+        return self.__str__().replace(' ', '_').lower()
 
     def sample(self):
         return u'<span style="font-family:\'%s\'">ABCabc</span>' % self.family
 
     def __init__(self, *args, **kwargs):
         super(Font, self).__init__(*args, **kwargs)
-        self._name_orig = self.name
+        self._props_orig = self.props
+
+    def rename(self):
+        for src in self.srcs.all():
+            src.rename(self.filename)
 
     def save(self, *args, **kwargs):
         super(Font, self).save(*args, **kwargs)
-        if self._name_orig and self._name_orig != self.name:
-            for src in self.srcs:
-                src.rename(self.name)
-        self.update_themes()
-        self.__class__.update_all_rules_stylesheet()
+        if self._props_orig and self._props_orig != self.props:
+            self.rename()
+            self.update_themes()
+            self.__class__.update_all_rules_stylesheet()
 
     def delete(self, *args, **kwargs):
         super(Font, self).delete(*args, **kwargs)
@@ -362,7 +447,7 @@ class Font(PermissionBase):
         """
         rule = [
             "@font-face {",
-            "    font-family: '%s';" % self.family,
+            "    font-family: '%s';" % self.famptr.family,
         ]
         for attr in ('weight', 'style', 'stretch', 'variant'):
             if getattr(self, attr):
@@ -370,7 +455,7 @@ class Font(PermissionBase):
         locals = []
         files = {}
         eot = None
-        for src in self.srcs.order_by('order'):
+        for src in self.srcs.all():
             if src.format == 'eot':
                 eot = src
             if src.file:
@@ -390,15 +475,19 @@ class Font(PermissionBase):
         return "\n".join(rule)
 
     def update_themes(self):
-        for theme in self.themes.all():
+        for theme in self.famptr.themes.all():
             theme.update_css_files()
+
+    class Meta:
+        unique_together = ('famptr', 'weight', 'style', 'stretch', 'variant')
+        ordering = ['famptr',  'weight', 'style', 'stretch', 'variant']
 
 def fontsrc_file_path(self, filename):
     self.filext = os.path.splitext(filename)[1].lower()
-    return '%s/%s%s' % (FONT_PATH, self.font.name, self.filext)
+    return '%s/%s%s' % (FONT_PATH, self.font.filename, self.filext)
 
 @python_2_unicode_compatible
-class FontSrc(models.Model):
+class FontSrc(models.Model, RenameBase):
     FORMATS = (
         ('eot', _('Embedded OpenType (eot)')),
         ('woff2', _('Web Open Font Format 2 (woff2)')),
@@ -425,14 +514,15 @@ class FontSrc(models.Model):
         if self.format == 'local':
             return self.local
         else:
-            return '%s%s' % (self.font.name, self.filext)
+            return '%s%s' % (self.font.filename, self.filext)
 
     @property
     def url(self):
         return '%s%s' % (settings.MEDIA_URL, self.path_from_name())
 
     def path_from_name(self, name=None):
-        return '%s/%s' % (FONT_PATH, name or self.name)
+        name = "%s%s" % (name, self.filext) if name else self.name
+        return '%s/%s' % (FONT_PATH, name)
 
     @property
     def value(self):
@@ -451,18 +541,24 @@ class FontSrc(models.Model):
             return "local('%s')" % self.local
 
     def rename(self, newname):
-        rename_fieldfile(self.file, self.path_from_name(newname))
+        self.rename_fieldfile('file', self.path_from_name(newname))
+        super(FontSrc, self).save()
 
     def save(self, *args, **kwargs):
         super(FontSrc, self).save(*args, **kwargs)
-        self.font.update_themes()
-        Font.update_all_rules_stylesheet()
+        self.font.famptr.update_themes()
+        self.font.__class__.update_all_rules_stylesheet()
 
     def delete(self, *args, **kwargs):
         font = self.font
         super(FontSrc, self).delete(*args, **kwargs)
         font.update_themes()
-        Font.update_all_rules_stylesheet()
+        font.__class__.update_all_rules_stylesheet()
+
+    class Meta:
+        unique_together = ('local', 'file')
+        ordering = ['order']
+        verbose_name = 'font source'
 
 @python_2_unicode_compatible
 class Stylesheet(models.Model):
@@ -493,7 +589,8 @@ class Stylesheet(models.Model):
         return '%s/%s_%s.css' % (CSS_PATH, name or self.theme.name, self.media)
 
     def font_rules(self):
-        return "\n".join([f.rule() for f in self.theme.fonts.order_by('name')])
+        return "\n".join([f.rule() for f in
+                          Font.objects.filter(famptr__themes=self.theme)])
 
     def css_rules(self):
         images = dict((img.name, img) for img in self.theme.images.all())
@@ -522,6 +619,7 @@ class Stylesheet(models.Model):
 
     class Meta:
         unique_together = ('theme', 'media')
+        ordering = ['media']
 
 class PageTheme(PageExtension):
     theme = models.ForeignKey(Theme, on_delete=CASCADE, blank=True,
@@ -536,6 +634,6 @@ def m2m_cascade(sender, instance, action, reverse, **kwargs):
             instance.delete()
 
 m2m_changed.connect(m2m_cascade, sender=Theme.images.through, dispatch_uid='')
-m2m_changed.connect(m2m_cascade, sender=Theme.fonts.through, dispatch_uid='')
+m2m_changed.connect(m2m_cascade, sender=Theme.fontfams.through, dispatch_uid='')
 
 extension_pool.register(PageTheme)

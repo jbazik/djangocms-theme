@@ -7,7 +7,7 @@ from cms.extensions import PageExtensionAdmin
 from djangocms_theme.widgets import TextWidget
 from djangocms_theme.forms import (ThemeForm, PageThemeForm,
                                    GridModelChoiceField, GridRadioRenderer)
-from djangocms_theme.models import (Theme, Image, Font, FontSrc,
+from djangocms_theme.models import (Theme, Image, FontFamily, Font, FontSrc,
                                     Stylesheet, PageTheme)
 
 
@@ -42,21 +42,31 @@ class ImageInline(admin.TabularInline):
     model = Theme.images.through
     verbose_name_plural = "Images used by this theme"
     extra = 0
+    fields = ('name', 'origin', 'owner', 'group')
+
+class FontFamilyInline(admin.TabularInline):
+    model = Theme.fontfams.through
+    verbose_name_plural = "Font families used by this theme"
+    extra = 0
+    fields = ('family', 'origin', 'license', 'owner', 'group')
 
 class FontInline(admin.TabularInline):
-    model = Theme.fonts.through
-    verbose_name_plural = "Fonts used by this theme"
+    model = Font
+    verbose_name_plural = "Fonts in this font family"
     extra = 0
+    show_change_link = True
+    #fields = ('famptr',)
+
+class FontSrcInline(admin.TabularInline):
+    model = FontSrc
+    verbose_name_plural = "Font files"
+    extra = 0
+    fields = ('format', 'local', 'file')
 
 class StylesheetInline(admin.TabularInline):
     model = Stylesheet
     extra = 0
-    fields = ('css', 'media',)
-
-class FontSrcInline(admin.TabularInline):
-    model = FontSrc
-    extra = 0
-    fields = ('format', 'local', 'file')
+    fields = ('css', 'media')
 
 @admin.register(Image)
 class ImageAdmin(PermissionMixin, admin.ModelAdmin):
@@ -75,24 +85,35 @@ class ImageAdmin(PermissionMixin, admin.ModelAdmin):
                    ('group', admin.RelatedOnlyFieldListFilter))
     search_fields = ('name', 'origin', 'description')
 
-@admin.register(Font)
-class FontAdmin(PermissionMixin, admin.ModelAdmin):
+@admin.register(FontFamily)
+class FontFamilyAdmin(PermissionMixin, admin.ModelAdmin):
     fieldsets = (
         (None, {
-            'fields': (('name', 'family', 'variant'),
-                       ('stretch', 'weight', 'style')),
+            'fields': ('family', 'origin', 'license'),
         }),
         ('Permissions', {
             'classes': ('collapse',),
             'fields': ('share', 'owner', 'group'),
         }),
     )
-    list_display = ('name', 'origin', 'family', 'weight', 'style',
-                    'owner', 'group')
-    list_filter = ('origin', 'weight', 'style',
+    list_display = ('family', 'origin', 'owner', 'group')
+    list_filter = ('origin', 'license',
                    ('owner', admin.RelatedOnlyFieldListFilter),
                    ('group', admin.RelatedOnlyFieldListFilter))
-    search_fields = ('name', 'origin', 'family')
+    search_fields = ('family', 'origin')
+    inlines = [FontInline]
+
+@admin.register(Font)
+class FontAdmin(admin.ModelAdmin):
+    fieldsets = (
+        (None, {
+            'fields': ('famptr', 'variant', 'stretch', 'weight', 'style'),
+        }),
+    )
+    readonly_fields = ('famptr',)
+    list_display = ('famptr',  'weight', 'style', 'stretch', 'variant')
+    list_filter = ('weight', 'style', 'stretch', 'variant')
+    search_fields = ('family',)
     inlines = [FontSrcInline]
 
 @admin.register(Theme)
@@ -103,7 +124,7 @@ class ThemeAdmin(PermissionMixin, admin.ModelAdmin):
             'fields': (('name', 'origin'),
                        ('description', 'screenshot'),
                        ('parent', 'reset'),
-                       'images', 'fonts'),
+                       'images', 'fontfams'),
         }),
         ('Permissions', {
             'classes': ('collapse',),
@@ -117,7 +138,7 @@ class ThemeAdmin(PermissionMixin, admin.ModelAdmin):
     list_filter = ('origin',
                    ('owner', admin.RelatedOnlyFieldListFilter),
                    ('group', admin.RelatedOnlyFieldListFilter))
-    filter_horizontal = ('images', 'fonts')
+    filter_horizontal = ('images', 'fontfams')
     search_fields = ('name', 'origin', 'description')
     inlines = [StylesheetInline]
 
@@ -136,8 +157,8 @@ class ThemeAdmin(PermissionMixin, admin.ModelAdmin):
         """
         if db_field.name == 'images':
             kwargs['queryset'] = Image.objects.can_use(request.user)
-        elif db_field.name == 'fonts':
-            kwargs['queryset'] = Font.objects.can_use(request.user)
+        elif db_field.name == 'fontfams':
+            kwargs['queryset'] = FontFamily.objects.can_use(request.user)
         return super(ThemeAdmin, self).formfield_for_manytomany(
                                        db_field, request, **kwargs)
 

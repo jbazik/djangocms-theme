@@ -28,7 +28,7 @@ Requirements
 
 Requires:
 
-* Django 1.7+
+* Django 1.8+
 
 * Django-CMS 3.0+
 

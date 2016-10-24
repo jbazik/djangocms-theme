@@ -74,5 +74,8 @@ class ScreenshotTests(TestCase):
         theme = Theme.objects.get(name='test_theme')
         theme.name = 'new_name'
         theme.save()
+        theme = Theme.objects.get(name='new_name')
+        self.assertEqual(theme.screenshot.name,
+                         os.path.join(SCREENSHOTS_PATH, 'new_name.png'))
         self.assertFalse(os.path.exists(os.path.join(dir, 'test_theme.png')))
         self.assertTrue(os.path.exists(os.path.join(dir, 'new_name.png')))
