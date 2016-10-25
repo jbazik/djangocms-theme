@@ -48,14 +48,14 @@ class FontFamilyInline(admin.TabularInline):
     model = Theme.fontfams.through
     verbose_name_plural = "Font families used by this theme"
     extra = 0
-    fields = ('family', 'origin', 'license', 'owner', 'group')
+    fields = ('name', 'origin', 'license', 'owner', 'group')
 
 class FontInline(admin.TabularInline):
     model = Font
     verbose_name_plural = "Fonts in this font family"
     extra = 0
     show_change_link = True
-    #fields = ('famptr',)
+    #fields = ('family',)
 
 class FontSrcInline(admin.TabularInline):
     model = FontSrc
@@ -89,29 +89,29 @@ class ImageAdmin(PermissionMixin, admin.ModelAdmin):
 class FontFamilyAdmin(PermissionMixin, admin.ModelAdmin):
     fieldsets = (
         (None, {
-            'fields': ('family', 'origin', 'license'),
+            'fields': ('name', 'origin', 'license'),
         }),
         ('Permissions', {
             'classes': ('collapse',),
             'fields': ('share', 'owner', 'group'),
         }),
     )
-    list_display = ('family', 'origin', 'owner', 'group')
+    list_display = ('name', 'origin', 'owner', 'group')
     list_filter = ('origin', 'license',
                    ('owner', admin.RelatedOnlyFieldListFilter),
                    ('group', admin.RelatedOnlyFieldListFilter))
-    search_fields = ('family', 'origin')
+    search_fields = ('name', 'origin')
     inlines = [FontInline]
 
 @admin.register(Font)
 class FontAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
-            'fields': ('famptr', 'variant', 'stretch', 'weight', 'style'),
+            'fields': ('family', 'variant', 'stretch', 'weight', 'style'),
         }),
     )
-    readonly_fields = ('famptr',)
-    list_display = ('famptr',  'weight', 'style', 'stretch', 'variant')
+    readonly_fields = ('family',)
+    list_display = ('family',  'weight', 'style', 'stretch', 'variant')
     list_filter = ('weight', 'style', 'stretch', 'variant')
     search_fields = ('family',)
     inlines = [FontSrcInline]

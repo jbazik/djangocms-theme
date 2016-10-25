@@ -40,21 +40,21 @@ class RuleTests(TestCase):
         return src
 
     def test_fontsrc_file(self):
-        fam = FontFamily.objects.create(family='FooFont')
-        font = Font.objects.create(famptr=fam)
+        fam = FontFamily.objects.create(name='FooFont')
+        font = Font.objects.create(family=fam)
         src = self.addfontsrc(font, 'test.ttf', 'ttf')
         self.assertEqual(src.value, u"url('%s') format('truetype')" %
                                     self.mr.url('font', 'foofont.ttf'))
 
     def test_fontsrc_local(self):
-        fam = FontFamily.objects.create(family='FooFont')
-        font = Font.objects.create(famptr=fam)
+        fam = FontFamily.objects.create(name='FooFont')
+        font = Font.objects.create(family=fam)
         src = self.addfontsrc(font, 'Ariel', 'local')
         self.assertEqual(src.value, u"local('Ariel')")
 
     def test_font_rules(self):
-        fam = FontFamily.objects.create(family='FooFont')
-        font = Font.objects.create(famptr=fam, weight='bold', style='italic')
+        fam = FontFamily.objects.create(name='FooFont')
+        font = Font.objects.create(family=fam, weight='bold', style='italic')
         self.addfontsrc(font, 'test.ttf', 'ttf')
         self.addfontsrc(font, 'test.woff', 'woff')
         self.addfontsrc(font, 'Ariel', 'local')
@@ -73,11 +73,11 @@ class RuleTests(TestCase):
               self.mr.url('font', 'foofont_bold_italic.ttf')))
 
     def test_font_all_rules(self):
-        fam1 = FontFamily.objects.create(family='FooFont1')
-        font1 = Font.objects.create(famptr=fam1, weight='bold')
+        fam1 = FontFamily.objects.create(name='FooFont1')
+        font1 = Font.objects.create(family=fam1, weight='bold')
         self.addfontsrc(font1, 'test1.ttf', 'ttf')
-        fam2 = FontFamily.objects.create(family='FooFont2')
-        font2 = Font.objects.create(famptr=fam2, style='italic')
+        fam2 = FontFamily.objects.create(name='FooFont2')
+        font2 = Font.objects.create(family=fam2, style='italic')
         self.addfontsrc(font2, 'test2.ttf', 'ttf')
         css = "\n".join(Font.all_rules())
         self.assertRegexpMatches(css, r'FooFont1')
@@ -110,16 +110,16 @@ class RuleTests(TestCase):
         theme = Theme.objects.create(name='test_theme')
         obj = Stylesheet.objects.create(theme=theme)
 
-        foofam = FontFamily.objects.create(family='FooFont', license='unk')
-        foo = Font.objects.create(famptr=foofam, weight='bold', style='italic')
+        foofam = FontFamily.objects.create(name='FooFont', license='unk')
+        foo = Font.objects.create(family=foofam, weight='bold', style='italic')
         foofam.fonts.add(foo)
         theme.fontfams.add(foofam)
 
         self.addfontsrc(foo, 'foo.ttf', 'ttf')
         self.addfontsrc(foo, 'foo.woff', 'woff')
 
-        barfam = FontFamily.objects.create(family='BarFont', license='unk')
-        bar = Font.objects.create(famptr=barfam,
+        barfam = FontFamily.objects.create(name='BarFont', license='unk')
+        bar = Font.objects.create(family=barfam,
                                   weight='normal', style='oblique')
         theme.fontfams.add(barfam)
 

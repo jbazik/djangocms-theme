@@ -24,8 +24,8 @@ class PathTests(TestCase):
 
     def test_fontsrc_path(self):
         self.mr.create_file('font', 'test.ttf')
-        fam = FontFamily.objects.create(family='FooFont')
-        font = Font.objects.create(famptr=fam)
+        fam = FontFamily.objects.create(name='FooFont')
+        font = Font.objects.create(family=fam)
         obj = FontSrc.objects.create(font=font, format='ttf',
                                      file=self.mr.rel('font', 'test.ttf'))
         obj.fontsrc_file_path('test.ttf')

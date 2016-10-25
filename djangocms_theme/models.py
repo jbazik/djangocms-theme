@@ -262,7 +262,7 @@ class FontFamily(PermissionBase):
         ('com', _('Commercial')),
         ('unk', _('Unknown')),
     )
-    family = models.CharField(_('family'), max_length=100, unique=True,
+    name = models.CharField(_('name'), max_length=100, unique=True,
                     help_text=_('CSS Font family name for this font.'))
     origin = models.CharField(_('origin'), max_length=120, blank=True,
                     help_text=_('Font foundry, designer or website.'))
@@ -271,11 +271,11 @@ class FontFamily(PermissionBase):
                     help_text=_('License terms.'))
 
     def __str__(self):
-        return self.family;
+        return self.name;
 
     def __init__(self, *args, **kwargs):
         super(FontFamily, self).__init__(*args, **kwargs)
-        self._family_orig = self.family
+        self._name_orig = self.name
 
     def rename(self):
         for font in self.fonts.all():
@@ -283,7 +283,7 @@ class FontFamily(PermissionBase):
 
     def save(self, *args, **kwargs):
         super(FontFamily, self).save(*args, **kwargs)
-        if self._family_orig and self._family_orig != self.family:
+        if self._name_orig and self._name_orig != self.name:
             self.rename()
         self.update_themes()
         Font.update_all_rules_stylesheet()
@@ -293,7 +293,7 @@ class FontFamily(PermissionBase):
             theme.update_css_files()
 
     class Meta:
-        ordering = ['family']
+        ordering = ['name']
         verbose_name_plural = "font families"
 
 @python_2_unicode_compatible
@@ -355,7 +355,7 @@ class Font(models.Model):
         'italic': 'Italic',
         'oblique': 'Oblique',
     }
-    famptr = models.ForeignKey(FontFamily, on_delete=CASCADE, null=True,
+    family = models.ForeignKey(FontFamily, on_delete=CASCADE, null=True,
                     verbose_name=_('font family'), related_name='fonts')
     weight = models.CharField(_('weight'), max_length=10, blank=True,
                                            choices=WEIGHT_CHOICES)
@@ -385,7 +385,7 @@ class Font(models.Model):
                              "\n".join(cls.all_rules())))
 
     def __str__(self):
-        name = [self.famptr.family]
+        name = [self.family.name]
         if self.props:
             name.append(self.props)
         return ' '.join(name)
@@ -412,7 +412,7 @@ class Font(models.Model):
         return self.__str__().replace(' ', '_').lower()
 
     def sample(self):
-        return u'<span style="font-family:\'%s\'">ABCabc</span>' % self.family
+        return u'<span style="font-family:\'%s\'">ABCabc</span>' % self.name
 
     def __init__(self, *args, **kwargs):
         super(Font, self).__init__(*args, **kwargs)
@@ -447,7 +447,7 @@ class Font(models.Model):
         """
         rule = [
             "@font-face {",
-            "    font-family: '%s';" % self.famptr.family,
+            "    font-family: '%s';" % self.family.name,
         ]
         for attr in ('weight', 'style', 'stretch', 'variant'):
             if getattr(self, attr):
@@ -475,12 +475,12 @@ class Font(models.Model):
         return "\n".join(rule)
 
     def update_themes(self):
-        for theme in self.famptr.themes.all():
+        for theme in self.family.themes.all():
             theme.update_css_files()
 
     class Meta:
-        unique_together = ('famptr', 'weight', 'style', 'stretch', 'variant')
-        ordering = ['famptr',  'weight', 'style', 'stretch', 'variant']
+        unique_together = ('family', 'weight', 'style', 'stretch', 'variant')
+        ordering = ['family',  'weight', 'style', 'stretch', 'variant']
 
 def fontsrc_file_path(self, filename):
     self.filext = os.path.splitext(filename)[1].lower()
@@ -546,7 +546,7 @@ class FontSrc(models.Model, RenameBase):
 
     def save(self, *args, **kwargs):
         super(FontSrc, self).save(*args, **kwargs)
-        self.font.famptr.update_themes()
+        self.font.family.update_themes()
         self.font.__class__.update_all_rules_stylesheet()
 
     def delete(self, *args, **kwargs):
@@ -590,7 +590,7 @@ class Stylesheet(models.Model):
 
     def font_rules(self):
         return "\n".join([f.rule() for f in
-                          Font.objects.filter(famptr__themes=self.theme)])
+                          Font.objects.filter(family__themes=self.theme)])
 
     def css_rules(self):
         images = dict((img.name, img) for img in self.theme.images.all())
