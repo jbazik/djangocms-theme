@@ -9,8 +9,6 @@ from django.conf import settings
 
 class Migration(migrations.Migration):
 
-    replaces = [(b'djangocms_theme', '0001_initial'), (b'djangocms_theme', '0002_font_refactor_1'), (b'djangocms_theme', '0003_font_refactor_data'), (b'djangocms_theme', '0004_font_refactor_2'), (b'djangocms_theme', '0005_font_file_rename'), (b'djangocms_theme', '0006_font_refactor_3')]
-
     dependencies = [
         ('cms', '__first__'),
         ('auth', '0006_require_contenttypes_0002'),
