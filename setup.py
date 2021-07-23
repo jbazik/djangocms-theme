@@ -12,10 +12,10 @@ setup(name='djangocms-theme',
     author_email='jsb@cs.brown.edu',
     url='http://github.com/jbazik/djangocms-theme',
     install_requires = [
-        'Django>=1.8,<1.9',
-        'django-cms>=3.0',
+        'Django >=2.0',
+        'django-cms >=3.0',
         'Pillow',
-        'html5lib<=0.9999999',
+        'html5lib',
     ],
     test_suite = 'djangocms_theme.tests.test_models',
     classifiers=[

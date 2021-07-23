@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import os, re
 from io import StringIO
 
@@ -231,7 +229,7 @@ class Image(PermissionBase, RenameBase):
 
     @property
     def image_tag(self):
-        return format_html(u'<img src="%s">' % self.url)
+        return format_html('<img src="%s">' % self.url)
 
     def path_from_name(self, name=None):
         return '%s/%s%s' % (IMAGE_PATH, name or self.name, self.imext)
@@ -412,7 +410,7 @@ class Font(models.Model):
         return self.__str__().replace(' ', '_').lower()
 
     def sample(self):
-        return u'<span style="font-family:\'%s\'">ABCabc</span>' % self.name
+        return '<span style="font-family:\'%s\'">ABCabc</span>' % self.name
 
     def __init__(self, *args, **kwargs):
         super(Font, self).__init__(*args, **kwargs)

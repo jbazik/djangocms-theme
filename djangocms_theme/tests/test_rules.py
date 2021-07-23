@@ -43,14 +43,14 @@ class RuleTests(TestCase):
         fam = FontFamily.objects.create(name='FooFont')
         font = Font.objects.create(family=fam)
         src = self.addfontsrc(font, 'test.ttf', 'ttf')
-        self.assertEqual(src.value, u"url('%s') format('truetype')" %
+        self.assertEqual(src.value, "url('%s') format('truetype')" %
                                     self.mr.url('font', 'foofont.ttf'))
 
     def test_fontsrc_local(self):
         fam = FontFamily.objects.create(name='FooFont')
         font = Font.objects.create(family=fam)
         src = self.addfontsrc(font, 'Ariel', 'local')
-        self.assertEqual(src.value, u"local('Ariel')")
+        self.assertEqual(src.value, "local('Ariel')")
 
     def test_font_rules(self):
         fam = FontFamily.objects.create(name='FooFont')
@@ -80,8 +80,8 @@ class RuleTests(TestCase):
         font2 = Font.objects.create(family=fam2, style='italic')
         self.addfontsrc(font2, 'test2.ttf', 'ttf')
         css = "\n".join(Font.all_rules())
-        self.assertRegexpMatches(css, r'FooFont1')
-        self.assertRegexpMatches(css, r'FooFont2')
+        self.assertRegex(css, r'FooFont1')
+        self.assertRegex(css, r'FooFont2')
         all_rules_path = os.path.join(self.mr.abs('fonts.css'))
         self.assertTrue(os.path.exists(all_rules_path))
         text = open(all_rules_path, 'r').read()

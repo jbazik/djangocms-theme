@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 
 from django.db import migrations, models
 import djangocms_theme.models
@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
                 ('filext', models.CharField(max_length=10, editable=False, blank=True)),
                 ('format', models.CharField(max_length=20, verbose_name='format', choices=[('eot', 'Embedded OpenType (eot)'), ('woff2', 'Web Open Font Format 2 (woff2)'), ('woff', 'Web Open Font Format (woff)'), ('ttf', 'TrueType (ttf)'), ('svg', 'Scalable Vector Graphics (svg)'), ('local', 'Local Browser Font')])),
                 ('order', models.PositiveIntegerField(default=0, editable=False)),
-                ('font', models.ForeignKey(related_name='srcs', to='djangocms_theme.Font')),
+                ('font', models.ForeignKey(related_name='srcs', to='djangocms_theme.Font', on_delete=models.CASCADE)),
             ],
             options={
                 'ordering': ['order'],
@@ -84,8 +84,8 @@ class Migration(migrations.Migration):
             name='PageTheme',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('extended_object', models.OneToOneField(editable=False, to='cms.Page')),
-                ('public_extension', models.OneToOneField(related_name='draft_extension', null=True, editable=False, to='djangocms_theme.PageTheme')),
+                ('extended_object', models.OneToOneField(editable=False, to='cms.Page', on_delete=models.CASCADE)),
+                ('public_extension', models.OneToOneField(related_name='draft_extension', null=True, editable=False, to='djangocms_theme.PageTheme', on_delete=models.CASCADE)),
             ],
             options={
                 'abstract': False,
@@ -117,7 +117,7 @@ class Migration(migrations.Migration):
                 ('group', models.ForeignKey(on_delete=django.db.models.deletion.SET_NULL, blank=True, to='auth.Group', null=True)),
                 ('images', models.ManyToManyField(related_name='themes', to='djangocms_theme.Image', blank=True)),
                 ('owner', models.ForeignKey(on_delete=django.db.models.deletion.SET_NULL, blank=True, to=settings.AUTH_USER_MODEL, null=True)),
-                ('parent', models.ForeignKey(blank=True, to='djangocms_theme.Theme', null=True)),
+                ('parent', models.ForeignKey(blank=True, to='djangocms_theme.Theme', null=True, on_delete=models.CASCADE)),
             ],
             options={
                 'ordering': ['name'],
@@ -127,17 +127,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='stylesheet',
             name='theme',
-            field=models.ForeignKey(related_name='stylesheets', to='djangocms_theme.Theme'),
+            field=models.ForeignKey(related_name='stylesheets', to='djangocms_theme.Theme', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='pagetheme',
             name='theme',
-            field=models.ForeignKey(related_name='pages', blank=True, to='djangocms_theme.Theme'),
+            field=models.ForeignKey(related_name='pages', blank=True, to='djangocms_theme.Theme', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='font',
             name='family',
-            field=models.ForeignKey(related_name='fonts', verbose_name='font family', to='djangocms_theme.FontFamily', null=True),
+            field=models.ForeignKey(related_name='fonts', verbose_name='font family', to='djangocms_theme.FontFamily', null=True, on_delete=models.CASCADE),
         ),
         migrations.AlterUniqueTogether(
             name='stylesheet',

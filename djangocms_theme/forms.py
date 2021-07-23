@@ -50,20 +50,30 @@ class GridModelChoiceField(forms.ModelChoiceField):
     """
     def label_from_instance(self, obj):
         if obj.screenshot:
-            return mark_safe(u'%s<br /><img src="%s" />' %
+            return mark_safe('%s<br /><img src="%s" />' %
                              (obj.name, obj.screenshot.url))
         else:
             return obj.name
 
-class GridRadioRenderer(forms.RadioSelect.renderer):
+# -- can't do this anymore
+#class GridRadioRenderer(forms.RadioSelect.renderer):
+#    """
+#    Subclass the Radio widget renderer to change the template for
+#    selecting themes in the admin.
+#    """
+#    fmt = '<span style="max-width:%dpx;">{}</span>' % THUMBSIZE
+#    def render(self):
+#        return format_html('<div class="theme_radio_grid">\n{}\n</div>',
+#            format_html_join('\n', self.fmt, ((force_text(w),) for w in self)))
+
+class GridRadioSelect(forms.RadioSelect):
     """
-    Subclass the Radio widget renderer to change the template for
-    selecting themes in the admin.
+    Subclass the Radio widget to wrap the template in a div that can be
+    styled as a grid.
     """
-    fmt = '<span style="max-width:%dpx;">{}</span>' % THUMBSIZE
-    def render(self):
-        return format_html(u'<div class="theme_radio_grid">\n{}\n</div>',
-            format_html_join('\n', self.fmt, ((force_text(w),) for w in self)))
+    def render(self, *args, **kwargs):
+        html = super(GridRadioSelect, self).render(*args, **kwargs)
+        return mark_safe('<div class="theme_radio_grid">\n%s\n</div>' % html)
 
 class PageThemeForm(forms.ModelForm):
     def clean_theme(self):

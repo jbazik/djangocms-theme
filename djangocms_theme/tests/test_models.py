@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.test import TestCase
 
-from cms.models import Page
+from cms.api import create_page
 
 from djangocms_theme.models import (Theme, Image, Font, FontSrc,
                                     Stylesheet, PageTheme)
@@ -35,6 +35,6 @@ class ModelTests(TestCase):
 
     def test_page(self):
         theme = Theme.objects.create(name='foo')
-        page = Page.objects.create(site_id=settings.SITE_ID)
+        page = create_page('root', 'bogus.html', 'en', published=True)
         pagetheme = PageTheme.objects.create(extended_object=page, theme=theme)
         self.assertEqual(page.pagetheme, pagetheme)

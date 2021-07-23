@@ -6,7 +6,7 @@ from cms.extensions import PageExtensionAdmin
 
 from djangocms_theme.widgets import TextWidget
 from djangocms_theme.forms import (ThemeForm, PageThemeForm,
-                                   GridModelChoiceField, GridRadioRenderer)
+                                   GridModelChoiceField, GridRadioSelect)
 from djangocms_theme.models import (Theme, Image, FontFamily, Font, FontSrc,
                                     Stylesheet, PageTheme)
 
@@ -185,7 +185,7 @@ class PageThemeAdmin(PageExtensionAdmin):
         """
         if db_field.name == 'theme':
             kwargs['queryset'] = Theme.objects.can_use(request.user)
-            kwargs['widget'] = RadioSelect(renderer=GridRadioRenderer)
+            kwargs['widget'] = GridRadioSelect()
             kwargs['empty_label'] = 'No Theme'
             kwargs['form_class'] = GridModelChoiceField
         return super(PageThemeAdmin, self).formfield_for_foreignkey(

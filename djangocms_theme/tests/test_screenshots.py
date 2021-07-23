@@ -4,7 +4,7 @@ from io import BytesIO
 from PIL import Image
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import TestCase, RequestFactory
 
 from django.contrib.auth.models import User
@@ -35,8 +35,9 @@ class ScreenshotTests(TestCase):
 
     def _redbox(self, dim, format):
         size = (dim, dim)
-        img = Image.new('RGBA', size, (255,0,0,0))
+        img = Image.new('RGB', size, (255,0,0))
         jpg = BytesIO()
+        jpg.name = 'red.jpg'
         img.save(jpg, format)
         jpg.seek(0)
         return jpg

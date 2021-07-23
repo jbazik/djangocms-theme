@@ -16,4 +16,4 @@ class IconExtensionToolbar(ExtensionToolbar):
             page_extension, url = self.get_page_extension_admin()
             if url:
                 current_page_menu.add_modal_item(_('Page Theme'), url=url,
-                    disabled=not self.toolbar.edit_mode)
+                    disabled=not self.toolbar.edit_mode_active, position=0)
