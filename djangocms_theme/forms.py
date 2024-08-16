@@ -2,7 +2,7 @@ from PIL import Image
 
 from django.core.files.base import File
 from django.utils.html import mark_safe, format_html, format_html_join
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django import forms
 
 from djangocms_theme.settings import THUMBSIZE

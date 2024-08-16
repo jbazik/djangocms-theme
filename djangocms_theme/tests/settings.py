@@ -1,9 +1,9 @@
 from distutils.version import LooseVersion
-from django import VERSION as DJ_VER
-from cms import __version__ as CMS_VER
 
 SITE_ID = 1
 SECRET_KEY = 'fake-key'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 DATABASES = {
     'default': {
@@ -15,34 +15,26 @@ DATABASES = {
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
-ROOT_URLCONF = 'test_urls'
+ROOT_URLCONF = 'djangocms_theme.tests.urls'
 
-if DJ_VER >= (1, 8):
-    TEMPLATES = [
-        {
-            'BACKEND': 'django.template.backends.django.DjangoTemplates',
-            'DIRS': ['djangocms_theme/tests'],
-            'APP_DIRS': True,
-            'OPTIONS': {
-                'context_processors': [
-                    'django.template.context_processors.debug',
-                    'django.template.context_processors.request',
-                    'django.contrib.auth.context_processors.auth',
-                    'django.contrib.messages.context_processors.messages',
-                    'sekizai.context_processors.sekizai'
-                ],
-            },
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': ['djangocms_theme/tests'],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'sekizai.context_processors.sekizai'
+            ],
         },
-    ]
-else:
-    TEMPLATE_DIRS = ['djangocms_theme/tests']
-    TEMPLATE_CONTEXT_PROCESSORS = (
-        'django.core.context_processors.request',
-        'sekizai.context_processors.sekizai',
-    )
+    },
+]
 
-
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -51,9 +43,6 @@ MIDDLEWARE_CLASSES = (
 )
 
 tree = 'treebeard'
-
-if LooseVersion(CMS_VER) < LooseVersion('3.1'):
-    tree = 'mptt'
 
 INSTALLED_APPS = (
     'django.contrib.auth',

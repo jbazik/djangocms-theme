@@ -10,7 +10,7 @@ from django.db import models
 from django.db.models import Q, SET_NULL, CASCADE
 from django.db.models.signals import m2m_changed
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from django.contrib.auth.models import Group
 
@@ -327,7 +327,7 @@ class Font(models.Model):
         ('900',    _('900 Black (Heavy)')),
     )
     WEIGHT_NAMES = {
-        'normal': None,
+        'normal': _('None'),
         'bold': _('Bold'),
         '100':  _('Thin'),
         '200':  _('Extra Light'),
