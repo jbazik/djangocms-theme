@@ -10,7 +10,6 @@ from django.db import models
 from django.db.models import Q, SET_NULL, CASCADE
 from django.db.models.signals import m2m_changed
 from django.utils.html import format_html
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext as _
 
 from django.contrib.auth.models import Group
@@ -135,7 +134,6 @@ def screenshot_path(self, filename):
     """
     return '%s/%s.png' % (SCREENSHOTS_PATH, self.name)
 
-@python_2_unicode_compatible
 class Theme(PermissionBase, RenameBase):
 
     name = models.CharField(_('name'), max_length=120, unique=True)
@@ -202,7 +200,6 @@ def image_path(self, filename):
     self.imext = os.path.splitext(filename)[1].lower()
     return '%s/%s%s' % (IMAGE_PATH, self.name, self.imext)
 
-@python_2_unicode_compatible
 class Image(PermissionBase, RenameBase):
 
     image_path = image_path
@@ -250,7 +247,6 @@ class Image(PermissionBase, RenameBase):
     class Meta:
         ordering = ['name']
 
-@python_2_unicode_compatible
 class FontFamily(PermissionBase):
     LICENSE_TERMS = (
         ('pd', _('Public Domain')),
@@ -294,7 +290,6 @@ class FontFamily(PermissionBase):
         ordering = ['name']
         verbose_name_plural = "font families"
 
-@python_2_unicode_compatible
 class Font(models.Model):
     STRETCH = [(None, _('None'))] + [(v,_(v.capitalize())) for v in (
         'normal',
@@ -484,7 +479,6 @@ def fontsrc_file_path(self, filename):
     self.filext = os.path.splitext(filename)[1].lower()
     return '%s/%s%s' % (FONT_PATH, self.font.filename, self.filext)
 
-@python_2_unicode_compatible
 class FontSrc(models.Model, RenameBase):
     FORMATS = (
         ('eot', _('Embedded OpenType (eot)')),
@@ -558,7 +552,6 @@ class FontSrc(models.Model, RenameBase):
         ordering = ['order']
         verbose_name = 'font source'
 
-@python_2_unicode_compatible
 class Stylesheet(models.Model):
     css = models.TextField()
     media = models.CharField(_('media'), max_length=255, default='all')
