@@ -12,7 +12,7 @@ setup(name='djangocms-theme',
     author_email='jsb@cs.brown.edu',
     url='http://github.com/jbazik/djangocms-theme',
     install_requires = [
-        'Django >=3.2,<4.0',
+        'Django >=3.2',
         'django-cms >=3.11',
         'Pillow',
         'html5lib',
